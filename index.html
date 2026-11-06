@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Key Generator</title>
+<style>
+  :root {
+    --accent: #6c5ce7;
+    --accent2: #00cec9;
+    --bg: #0d0d17;
+    --card: #15151f;
+    --text: #eee;
+    --muted: #888;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: radial-gradient(circle at top, #1a1a2e, #0d0d17 70%);
+    color: var(--text);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+  }
+  .card {
+    background: var(--card);
+    border-radius: 20px;
+    padding: 36px;
+    width: 460px;
+    max-width: 100%;
+    box-shadow: 0 0 40px rgba(108,92,231,0.15);
+    border: 1px solid #ffffff10;
+  }
+  h2 {
+    margin: 0 0 4px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    font-size: 26px;
+  }
+  p.sub { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
+
+  .row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .field { flex: 1; }
+  label {
+    display: block;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  select, input[type=number] {
+    width: 100%;
+    background: #1e1e2b;
+    border: 1px solid #ffffff15;
+    color: var(--text);
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 14px;
+    outline: none;
+  }
+  select:focus, input:focus { border-color: var(--accent); }
+
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #1e1e2b;
+    padding: 10px 14px;
+    border-radius: 10px;
+    margin-bottom: 14px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .switch {
+    position: relative;
+    width: 40px;
+    height: 22px;
+  }
+  .switch input { display: none; }
+  .slider {
+    position: absolute;
+    inset: 0;
+    background: #333;
+    border-radius: 22px;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  .slider::before {
+    content: '';
+    position: absolute;
+    width: 16px; height: 16px;
+    left: 3px; top: 3px;
+    background: #fff;
+    border-radius: 50%;
+    transition: 0.2s;
+  }
+  .switch input:checked + .slider { background: var(--accent); }
+  .switch input:checked + .slider::before { transform: translateX(18px); }
+
+  .btn {
+    width: 100%;
+    border: none;
+    padding: 13px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+    cursor: pointer;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(108,92,231,0.35); }
+  .btn:active { transform: translateY(0); }
+
+  .result {
+    margin-top: 22px;
+    display: none;
+  }
+  .result.show { display: block; }
+
+  .key-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #1e1e2b;
+    border: 1px solid #ffffff10;
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 8px;
+    font-family: 'Consolas', monospace;
+    font-size: 14px;
+    letter-spacing: 1px;
+    color: var(--accent2);
+    animation: fadeIn 0.3s ease;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .copy-icon {
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 13px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: 0.15s;
+  }
+  .copy-icon:hover { background: #ffffff10; color: var(--text); }
+
+  .meta {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 14px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--accent);
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-size: 13px;
+    opacity: 0;
+    transition: 0.25s;
+    pointer-events: none;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <h2>⚡ Key Generator</h2>
+  <p class="sub">Tạo key ngẫu nhiên, tuỳ chỉnh định dạng và số lượng</p>
+
+  <div class="row">
+    <div class="field">
+      <label>Định dạng</label>
+      <select id="format">
+        <option value="4x4">XXXX-XXXX-XXXX-XXXX</option>
+        <option value="4x3">XXXX-XXXX-XXXX</option>
+        <option value="hex32">32 ký tự hex</option>
+        <option value="uuid">UUID v4</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Số lượng</label>
+      <input type="number" id="qty" value="1" min="1" max="50">
+    </div>
+  </div>
+
+  <div class="toggle-row">
+    <span>Thêm prefix (VD: PRO-)</span>
+    <label class="switch">
+      <input type="checkbox" id="prefixToggle">
+      <span class="slider"></span>
+    </label>
+  </div>
+  <div class="row" id="prefixRow" style="display:none;">
+    <div class="field">
+      <input type="text" id="prefixInput" placeholder="VD: PRO" maxlength="10">
+    </div>
+  </div>
+
+  <div class="toggle-row">
+    <span>Chỉ dùng chữ IN HOA + số (dễ đọc)</span>
+    <label class="switch">
+      <input type="checkbox" id="readableToggle" checked>
+      <span class="slider"></span>
+    </label>
+  </div>
+
+  <button class="btn" onclick="generateKeys()">Tạo Key</button>
+
+  <div class="result" id="result">
+    <div id="keyList"></div>
+    <div class="meta">
+      <span id="countInfo"></span>
+      <span id="timeInfo"></span>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">Đã copy!</div>
+
+<script>
+document.getElementById('prefixToggle').addEventListener('change', e => {
+  document.getElementById('prefixRow').style.display = e.target.checked ? 'flex' : 'none';
+});
+
+function randChar(readable) {
+  const full = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const readableSet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // bỏ ký tự dễ nhầm (0,O,1,I,l)
+  const set = readable ? readableSet : full;
+  return set[Math.floor(Math.random() * set.length)];
+}
+
+function genSegment(len, readable) {
+  let s = '';
+  for (let i = 0; i < len; i++) s += randChar(readable);
+  return s;
+}
+
+function genUUID() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
+function generateKeys() {
+  const format = document.getElementById('format').value;
+  const qty = Math.min(50, Math.max(1, parseInt(document.getElementById('qty').value) || 1));
+  const readable = document.getElementById('readableToggle').checked;
+  const usePrefix = document.getElementById('prefixToggle').checked;
+  const prefix = document.getElementById('prefixInput').value.trim().toUpperCase();
+
+  const list = document.getElementById('keyList');
+  list.innerHTML = '';
+
+  for (let n = 0; n < qty; n++) {
+    let key;
+    if (format === 'uuid') {
+      key = genUUID();
+    } else if (format === 'hex32') {
+      key = genSegment(32, false).toUpperCase();
+    } else {
+      const segCount = format === '4x4' ? 4 : 3;
+      const parts = [];
+      for (let i = 0; i < segCount; i++) parts.push(genSegment(4, readable).toUpperCase());
+      key = parts.join('-');
+    }
+    if (usePrefix && prefix) key = prefix + '-' + key;
+
+    const item = document.createElement('div');
+    item.className = 'key-item';
+    item.innerHTML = `<span>${key}</span><span class="copy-icon" onclick="copyOne(this, '${key}')">Copy</span>`;
+    list.appendChild(item);
+  }
+
+  document.getElementById('result').classList.add('show');
+  document.getElementById('countInfo').textContent = `Đã tạo ${qty} key`;
+  document.getElementById('timeInfo').textContent = new Date().toLocaleTimeString();
+}
+
+function copyOne(el, key) {
+  navigator.clipboard.writeText(key).then(() => showToast('Đã copy: ' + key));
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1500);
+}
+</script>
+
+</body>
+</html>
